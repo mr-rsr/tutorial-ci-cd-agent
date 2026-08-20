@@ -127,7 +127,12 @@ Answer with only 'yes' or 'no'."""
     return {"key": "tone", "score": llm_judge(prompt)}
 
 
+PASS_THRESHOLD = 0.8  # 80% of scored evals must pass to allow deploy
+
+
 if __name__ == "__main__":
+    import sys
+
     create_dataset()
 
     results = evaluate(
@@ -139,6 +144,7 @@ if __name__ == "__main__":
     )
 
     print("\n=== Eval Results ===")
+    all_scores = []
     for r in results:
         msg = r["run"].inputs.get("message", "")
         reply = (r["run"].outputs or {}).get("reply", "")
@@ -147,4 +153,15 @@ if __name__ == "__main__":
         print(f"Reply  : {reply}")
         for key, score in scores.items():
             print(f"  {key}: {score}")
+            if score is not None:  # skip None (not-applicable) scores
+                all_scores.append(score)
         print()
+
+    pass_rate = sum(all_scores) / len(all_scores) if all_scores else 0
+    print(f"=== Pass rate: {pass_rate:.0%} (threshold: {PASS_THRESHOLD:.0%}) ===")
+
+    if pass_rate < PASS_THRESHOLD:
+        print("EVALS FAILED — deploy blocked.")
+        sys.exit(1)
+
+    print("EVALS PASSED — deploy allowed.")
