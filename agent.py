@@ -15,14 +15,31 @@ model = ChatGoogleGenerativeAI(
 )
 
 
-# --- Tool ---
+# --- Tools ---
 @tool
 def get_weather(city: str) -> dict:
     """Return the current weather in a specified city"""
     return {"status": "success", "city": city, "weather": "Cloudy"}
 
 
-tools = [get_weather]
+@tool
+def get_currency_rate(base: str, target: str) -> dict:
+    """Return the exchange rate from base currency to target currency"""
+    rates = {
+        ("USD", "INR"): 83.5,
+        ("INR", "USD"): 0.012,
+        ("USD", "EUR"): 0.92,
+        ("EUR", "USD"): 1.09,
+        ("GBP", "INR"): 106.2,
+        ("INR", "GBP"): 0.0094,
+    }
+    rate = rates.get((base.upper(), target.upper()))
+    if rate is None:
+        return {"status": "error", "message": f"Rate for {base}/{target} not available"}
+    return {"status": "success", "base": base.upper(), "target": target.upper(), "rate": rate}
+
+
+tools = [get_weather, get_currency_rate]
 llm_with_tools = model.bind_tools(tools)
 
 

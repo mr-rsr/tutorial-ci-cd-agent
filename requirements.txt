@@ -4,3 +4,4 @@ langgraph
 langchain-google-genai
 langchain-core
 python-dotenv
+langsmith
